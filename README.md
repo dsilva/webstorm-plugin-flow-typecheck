@@ -1,0 +1,1 @@
+# webstorm-plugin-flow-typecheck
