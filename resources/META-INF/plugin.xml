@@ -1,0 +1,51 @@
+<idea-plugin version="2">
+  <id>com.github.dsilva.flowtc</id>
+  <name>Flow type-checking</name>
+  <version>1.0</version>
+  <vendor email="daniel@danielsilva.org" url="http://github.com/dsilva">dsilva</vendor>
+
+  <description><![CDATA[
+      Enter short description for your plugin here.<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="131"/>
+
+  <depends>com.intellij.modules.lang</depends>
+  <!--<depends>com.intellij.modules.platform</depends>-->
+  <depends>JavaScript</depends>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+    <localInspection implementationClass="com.github.dsilva.flowtc.FlowTypeCheckInspection"
+                     displayName="Flow type-check" groupPath="JavaScript" id="FlowTypeCheckInspection" level="ERROR"
+                     enabledByDefault="true"
+                     shortName="FlowTypeCheckInspection"
+                     language="JavaScript"
+    />
+    <!-- externalAnnotator language="JavaScript" implementationClass="com.jscs.JscsExternalAnnotator" / -->
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+    <action id="com.github.dsilva.flowtc.TypeCheckAction" class="com.github.dsilva.flowtc.TypeCheckAction" text="Type check this file"
+            description="Checks this file for type errors.">
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="shift meta alt R" second-keystroke="shift ctrl meta R"/>
+    </action>
+  </actions>
+
+</idea-plugin>
