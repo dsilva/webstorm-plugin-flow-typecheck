@@ -79,7 +79,13 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
 
         vfile.getParent().getCanonicalPath();
 
-        final String flowOutput = flowCheck(file.getProject(), dir, file.getText());
+        final String text = file.getText();
+        if (text == null) {
+            log.error("missing text for " + file);
+            return noProblems;
+        }
+
+        final String flowOutput = flowCheck(dir, text);
         log.debug("flow output", flowOutput);
 
         if (flowOutput.isEmpty()) {
@@ -175,15 +181,9 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
     private static final Random random = new Random();
 
     @NotNull
-    private static String flowCheck(@NotNull final Project project, @NotNull final String dir, String text) {
-        final String canonicalPath = project.getBaseDir().getCanonicalPath();
-        if (canonicalPath == null) {
-            log.error("flowCheck: missing canonical path for project");
-            return "";
-        }
-
-        final File workingDir = new File(canonicalPath);
-        log.debug("flowCheck working directory", canonicalPath);
+    private static String flowCheck(@NotNull final String dir, @NotNull String text) {
+        final File workingDir = new File(dir);
+        log.debug("flowCheck working directory", workingDir);
 
         final String[] cmd = new String[] {Settings.readPath(),
                 "check-contents",
