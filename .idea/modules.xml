@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/FlowTypeCheck.iml" filepath="$PROJECT_DIR$/FlowTypeCheck.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FlowTypeCheck.iml" filepath="$PROJECT_DIR$/.idea/modules/FlowTypeCheck.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FlowTypeCheck_main.iml" filepath="$PROJECT_DIR$/.idea/modules/FlowTypeCheck_main.iml" group="FlowTypeCheck" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/FlowTypeCheck_test.iml" filepath="$PROJECT_DIR$/.idea/modules/FlowTypeCheck_test.iml" group="FlowTypeCheck" />
     </modules>
   </component>
 </project>

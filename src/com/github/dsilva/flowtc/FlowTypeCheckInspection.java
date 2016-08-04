@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 
 /**
@@ -23,29 +24,27 @@ import java.util.List;
  */
 public class FlowTypeCheckInspection extends LocalInspectionTool {
     private static final Logger log = Logger.getInstance(FlowTypeCheckInspection.class);
-    static final ProblemDescriptor[] noProblems = new ProblemDescriptor[] {};
-    static final Gson gson = new Gson();
-    // TODO: make this configurable since /usr/local/bin isn't in $PATH by default on OS X
-    static final String flowExecutablePath = "/usr/local/bin/flow";
+    private static final ProblemDescriptor[] noProblems = new ProblemDescriptor[] {};
+    private static final Gson gson = new Gson();
 
-    static class FlowMessagePart {
-        public String descr;
+    private static class FlowMessagePart {
+        String descr;
         //public String level; // "error"
-        public String path;
-        public int line;
-        public int endline;
-        public int start;
-        public int end;
+        String path;
+        int line;
+        int endline;
+        int start;
+        int end;
     }
 
-    static class FlowError {
-        public ArrayList<FlowMessagePart> message;
+    private static class FlowError {
+        ArrayList<FlowMessagePart> message;
         //public String kind; // "infer"
     }
 
-    static class FlowResponse {
-        public boolean passed;
-        public ArrayList<FlowError> errors;
+    private static class FlowResponse {
+        boolean passed;
+        ArrayList<FlowError> errors;
         //public String version;
     }
 
@@ -55,6 +54,16 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
         log.debug("Flow checkFile", file);
 
         final VirtualFile vfile = file.getVirtualFile();
+        if (vfile == null) {
+            log.error("missing vfile for " + file);
+            return noProblems;
+        }
+
+        final VirtualFile vparent = vfile.getParent();
+        if (vparent == null) {
+            log.error("missing vparent for " + file);
+            return noProblems;
+        }
 
         final String path = vfile.getCanonicalPath();
         if (path == null) {
@@ -62,7 +71,15 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
             return noProblems;
         }
 
-        final String flowOutput = flowCheck(file.getProject(), path);
+        final String dir = vparent.getCanonicalPath();
+        if (dir == null) {
+            log.error("missing canonical dir for " + file);
+            return noProblems;
+        }
+
+        vfile.getParent().getCanonicalPath();
+
+        final String flowOutput = flowCheck(file.getProject(), dir, file.getText());
         log.debug("flow output", flowOutput);
 
         if (flowOutput.isEmpty()) {
@@ -93,7 +110,7 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
             return noProblems;
         }
 
-        final List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
+        final List<ProblemDescriptor> descriptors = new ArrayList<>();
 
         for (final FlowError error: response.errors) {
             final ArrayList<FlowMessagePart> messageParts = error.message;
@@ -103,7 +120,7 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
             }
 
             final FlowMessagePart firstPart = messageParts.get(0);
-            if (!path.equals(firstPart.path)) {
+            if (!path.equals(firstPart.path) && !"-".equals(firstPart.path)) {
                 log.info("skip error because first message part path " + firstPart.path + " does not match file path " + path);
                 continue;
             }
@@ -121,12 +138,15 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
             }
 
             final String errorMessage = errorMessageBuilder.toString();
+            log.info("Flow found error: " + errorMessage);
 
             for (final FlowMessagePart part: error.message) {
                 if (part.path.isEmpty()) {
+                    // skip part of error message that has no file/line reference
                     continue;
                 }
-                if (!path.equals(part.path)) {
+                if (!path.equals(part.path) && !"-".equals(part.path)) {
+                    // skip part of error message that refers to content in another file
                     continue;
                 }
 
@@ -138,16 +158,24 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
                         TextRange.create(lineStartOffset + part.start - 1, lineEndOffset + part.end),
                         errorMessage,
                         ProblemHighlightType.ERROR,
-                        true);
+                        isOnTheFly);
 
+                log.info("Flow error for file " + file + " at " + part.line + ":" + part.start + " to " + part.endline + ":" + part.end + " range " + TextRange.create(lineStartOffset + part.start - 1, lineEndOffset + part.end));
                 descriptors.add(problemDescriptor);
             }
         }
-        return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+        if (descriptors.isEmpty()) {
+            return noProblems;
+        } else {
+            log.info("Flow inspector found problem descriptors " + descriptors);
+            return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+        }
     }
 
+    private static final Random random = new Random();
+
     @NotNull
-    static String flowCheck(@NotNull final Project project, @NotNull final String path) {
+    private static String flowCheck(@NotNull final Project project, @NotNull final String dir, String text) {
         final String canonicalPath = project.getBaseDir().getCanonicalPath();
         if (canonicalPath == null) {
             log.error("flowCheck: missing canonical path for project");
@@ -157,7 +185,9 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
         final File workingDir = new File(canonicalPath);
         log.debug("flowCheck working directory", canonicalPath);
 
-        final String[] cmd = new String[] {flowExecutablePath, "--show-all-errors", "--json", path};
+        final String[] cmd = new String[] {Settings.readPath(),
+                "check-contents",
+                "--show-all-errors", "--json"};
 
         try {
             final Process process = Runtime.getRuntime().exec(
@@ -171,6 +201,13 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
 
             outThread.start();
             errorThread.start();
+
+            // Send the file text through stdin instead of letting Flow file it in the filesystem
+            // because IntelliJ might not have written the latest changes yet.
+            final OutputStream os = process.getOutputStream();
+            os.write(text.getBytes());
+            os.close();
+
             outThread.join();
             errorThread.join();
 
@@ -178,32 +215,24 @@ public class FlowTypeCheckInspection extends LocalInspectionTool {
             log.debug("flow exited with code ", exitCode);
 
             return outString.toString();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
         return "";
     }
 
-    static Thread readStream(@NotNull final StringBuilder outString, @NotNull final InputStream inputStream) {
-        return new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final BufferedReader outStream = new BufferedReader(
-                        new InputStreamReader(inputStream));
-                try {
-                    String line;
-                    try {
-                        while ((line = outStream.readLine()) != null) {
-                            outString.append(line).append("\n");
-                        }
-                    } finally {
-                        outStream.close();
+    private static Thread readStream(@NotNull final StringBuilder outString, @NotNull final InputStream inputStream) {
+        return new Thread(() -> {
+            try {
+                String line;
+                try (BufferedReader outStream = new BufferedReader(
+                        new InputStreamReader(inputStream))) {
+                    while ((line = outStream.readLine()) != null) {
+                        outString.append(line).append("\n");
                     }
-                } catch (IOException ex) {
-                    ex.printStackTrace();
                 }
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         });
     }

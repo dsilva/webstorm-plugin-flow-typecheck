@@ -2,16 +2,14 @@
   <id>com.github.dsilva.flowtc</id>
   <name>Flow type-checking</name>
   <version>1.0</version>
-  <vendor email="daniel@danielsilva.org" url="http://github.com/dsilva">dsilva</vendor>
+  <vendor email="daniel@danielsilva.org" url="http://github.com/dsilva/webstorm-plugin-flow-typecheck">dsilva</vendor>
 
   <description><![CDATA[
-      Enter short description for your plugin here.<br>
-      <em>most HTML tags may be used</em>
+      This plugin checks your JS/Flow source code for type errors.
     ]]></description>
 
   <change-notes><![CDATA[
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>
+      1.0: Initial version
     ]]>
   </change-notes>
 
@@ -32,20 +30,23 @@
     <!-- Add your extensions here -->
     <localInspection implementationClass="com.github.dsilva.flowtc.FlowTypeCheckInspection"
                      displayName="Flow type-check" groupPath="JavaScript" id="FlowTypeCheckInspection" level="ERROR"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.abstraction.issues"
                      enabledByDefault="true"
                      shortName="FlowTypeCheckInspection"
                      language="JavaScript"
     />
     <!-- externalAnnotator language="JavaScript" implementationClass="com.jscs.JscsExternalAnnotator" / -->
+    <applicationConfigurable instance="com.github.dsilva.flowtc.Settings" />
   </extensions>
 
   <actions>
     <!-- Add your actions here -->
-    <action id="com.github.dsilva.flowtc.TypeCheckAction" class="com.github.dsilva.flowtc.TypeCheckAction" text="Type check this file"
+    <!-- action id="com.github.dsilva.flowtc.TypeCheckAction" class="com.github.dsilva.flowtc.TypeCheckAction" text="Type check this file"
             description="Checks this file for type errors.">
       <add-to-group group-id="ToolsMenu" anchor="first"/>
       <keyboard-shortcut keymap="$default" first-keystroke="shift meta alt R" second-keystroke="shift ctrl meta R"/>
-    </action>
+    </action -->
   </actions>
 
 </idea-plugin>
