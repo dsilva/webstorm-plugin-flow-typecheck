@@ -1,5 +1,11 @@
+buildscript {
+  repositories {
+    maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
+  }
+}
+
 plugins {
-    id 'org.jetbrains.intellij' version "0.0.43"
+    id 'org.jetbrains.intellij' version "0.1.10"
 }
 
 apply plugin: 'java'
@@ -13,10 +19,10 @@ configurations {
     compile
 }
 
-dependencies {
-    compile 'com.fasterxml.jackson.core:jackson-core:2.7.0'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.7.0'
-}
+//dependencies {
+//    compile 'com.fasterxml.jackson.core:jackson-core:2.7.0'
+//    compile 'com.fasterxml.jackson.core:jackson-databind:2.7.0'
+//}
 
 //sourceCompatibility = "1.8"
 //targetCompatibility = "1.6"
@@ -46,4 +52,11 @@ idea {
         downloadJavadoc = true // defaults to false
         downloadSources = true
     }
+}
+
+// https://github.com/JetBrains/gradle-intellij-plugin
+intellij {
+  version '2016.1'
+  pluginName 'FlowTypeCheck'
+  updateSinceUntilBuild false
 }

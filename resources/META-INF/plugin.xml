@@ -28,14 +28,18 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
-    <localInspection implementationClass="com.github.dsilva.flowtc.FlowTypeCheckInspection"
+    <externalAnnotator language="JavaScript"
+                       implementationClass="com.github.dsilva.flowtc.ExternalAnnotator"
+                       id="FlowTypeCheckAnnotator"
+    />
+    <!-- localInspection implementationClass="com.github.dsilva.flowtc.FlowTypeCheckInspection"
                      displayName="Flow type-check" groupPath="JavaScript" id="FlowTypeCheckInspection" level="ERROR"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues"
                      enabledByDefault="true"
                      shortName="FlowTypeCheckInspection"
                      language="JavaScript"
-    />
+    / -->
     <!-- externalAnnotator language="JavaScript" implementationClass="com.jscs.JscsExternalAnnotator" / -->
     <applicationConfigurable instance="com.github.dsilva.flowtc.Settings" />
   </extensions>
