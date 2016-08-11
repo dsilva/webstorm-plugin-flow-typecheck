@@ -120,8 +120,8 @@ class TypeCheck {
                     continue;
                 }
 
-                final int lineStartOffset = document.getLineStartOffset(part.line - 1);
-                final int lineEndOffset = document.getLineStartOffset(part.endline - 1);
+                final int lineStartOffset = document.getLineStartOffset(remapLine(part.line, document));
+                final int lineEndOffset = document.getLineStartOffset(remapLine(part.endline, document));
 
                 log.info("Flow error for file " + file + " at " + part.line + ":" + part.start + " to " + part.endline + ":" + part.end + " range " + TextRange.create(lineStartOffset + part.start - 1, lineEndOffset + part.end));
 
@@ -135,6 +135,11 @@ class TypeCheck {
             log.info("Flow inspector found errors " + errors);
             return errors;
         }
+    }
+
+    private static int remapLine(int flowLine, Document document) {
+        final int lineIndex = flowLine - 1;
+        return Math.max(0, Math.min(lineIndex, document.getLineCount() - 1));
     }
 
     @NotNull
