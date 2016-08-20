@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -65,7 +66,6 @@ class TypeCheck {
         log.debug("flow output", flowOutput);
 
         if (flowOutput.isEmpty()) {
-            log.error("flow output was empty");
             return noProblems;
         }
 
@@ -155,13 +155,22 @@ class TypeCheck {
                 "--show-all-errors", "--json",
                 file.getName()};
 
-        final StringBuilder outString = new StringBuilder();
-        final StringBuilder errString = new StringBuilder();
+        final StringBuilder outBuilder = new StringBuilder();
+        final StringBuilder errBuilder = new StringBuilder();
 
-        final int exitCode = run(cmd, workingDir, outString, errString, text.getBytes());
+        final int exitCode = run(cmd, workingDir, outBuilder, errBuilder, text.getBytes());
         log.debug("flow exited with code ", exitCode);
 
-        return outString.toString();
+        final String output = outBuilder.toString();
+        if (output.isEmpty()) {
+            log.error("flow output was empty.\nWorking directory: " + workingDir
+                    + "\nFile: " + filePath
+                    + "\nCommand: " + Arrays.toString(cmd)
+                    + "\nExit code: " + exitCode
+                    + "\nstderr: " + errBuilder.toString());
+        }
+
+        return output;
     }
 
     private static int run(@NotNull final String[] cmd, @NotNull final File dir, @NotNull final StringBuilder stdout, @NotNull final StringBuilder stderr, final byte[] stdin) {
@@ -186,7 +195,9 @@ class TypeCheck {
 
             return process.waitFor();
         } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
+            final StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            log.error(sw.toString());
             return -100;
         }
     }
