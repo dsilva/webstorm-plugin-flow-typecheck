@@ -62,7 +62,14 @@ class TypeCheck {
             return noProblems;
         }
 
-        final String flowOutput = flowCheck(path, file.getText());
+        final String text = file.getText();
+
+        // skip files that flow itself would skip
+        if (!text.contains("@flow")) {
+            return noProblems;
+        }
+
+        final String flowOutput = flowCheck(path, text);
         log.debug("flow output", flowOutput);
 
         if (flowOutput.isEmpty()) {
